@@ -39,6 +39,7 @@ public class HW01 {
 		//	故障排除：https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-driver-name.html
 		
 		try {
+			System.out.println(System.getProperty("java.class.path"));
 			Class.forName("com.mysql.cj.jdbc.Driver"); // MySQL 8.0的驅動程式名稱有變
 //			Class.forName("com.mysql.jdbc.Driver"); // MySQl 5.1的驅動程式名稱
 			System.out.println("OK: Driver Loaded");
