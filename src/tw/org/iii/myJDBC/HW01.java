@@ -55,7 +55,7 @@ public class HW01 {
 }
 
 /*		2020-FEB-06
- * 		ConnectorJ 8.0.19 有bug，其 com.mysql.cj.jdbc 下的 Driver Class，沒有包含 source。
+ * 		ConnectorJ 8.0.19 可能有bug，其 com.mysql.cj.jdbc 下的 Driver Class，沒有包含 source。
  * 		造成 Class.forName("com.mysql.cj.jdbc.Driver") 載入JVM執行時，
  * 		出現錯誤  Exception in thread "main" java.lang.NoClassDefFoundError: java.sql.Driver
  * 		及 Caused by: java.lang.ClassNotFoundException: java.sql.Driver
