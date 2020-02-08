@@ -1,6 +1,6 @@
 package tw.org.iii.myJDBC;
 
-import java.sql.Driver; // JRE有，但無法載入 java.sql.*; 
+import java.sql.Driver; // 在Module-info中，使用指令 requires java.sql;，即可正常載入 java.sql.*
 import java.lang.reflect.Method;
 
 /*		20180826AM2 JDBC 基本設定
