@@ -24,8 +24,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 
 /*	會員資料庫管理之練習	20200224
  * 	本例執行前，需先執行	HW02_JDBC_Member01_3.class 一次，即先建好會員資料庫與資料表。
@@ -57,8 +59,8 @@ class mysqlFrame4 extends JFrame {
 		//	建立容器物件(可放入JPanel)
 		Container container;
 		JLabel item1, item2, item3, item4, item5, item6; // 姓名、年齡、性別、興趣、學歷、居住地址
-		ButtonGroup btn_group;
 		JCheckBox cb1, cb2, cb3, cb4, cb5;	//	興趣1至5
+		ButtonGroup btn_group;	// 按鈕群組(性別)
 		JRadioButton rb1, rb2;	// 男、女
 		JComboBox c_box; // 學歷下拉式清單
 		JTextField textName; // 填寫姓名的
@@ -113,6 +115,59 @@ class mysqlFrame4 extends JFrame {
 		add(panel1); //	把panel1加入JFrame中
 		
 		//	新增面板2=>配置個人資料項目及內容
+		panel2 = new JPanel();
+		panel2.setBounds(0, 40, 790, 500);
+		panel2.setLayout(null);	//	null表示使用絕對座標。
+		item1 = new JLabel("姓名：");	item1.setBounds(40, 60, 40, 20);
+		item2 = new JLabel("年齡：");	item2.setBounds(200, 60, 40, 20);
+		item3 = new JLabel("性別：");	item3.setBounds(40, 80, 40, 20);
+		item4 = new JLabel("興趣：");	item4.setBounds(40, 100, 50, 20);
+		item5 = new JLabel("學歷：");	item5.setBounds(40, 130, 50, 20);
+		item6 = new JLabel("居住地區：");	item6.setBounds(200, 130, 70, 20);
+		item7 = new JLabel("加入日期：");	item7.setBounds(40, 230, 70, 20);
+		item8 = new JLabel();	item8.setBounds(110, 230, 80, 20);	//	放置日期內容的物件
+		panel2.add(item1);	panel2.add(item2);	panel2.add(item3);
+		panel2.add(item4);	panel2.add(item5);	panel2.add(item6);
+		panel2.add(item7);	panel2.add(item8);
+		
+		//	帳號姓名欄位
+		textName = new JTextField(10);	//	10代表預設字元框框寬度
+		textName.setBounds(80, 60, 80, 20);
+		panel2.add(textName);
+		//	年齡
+		spinner = new JSpinner(new SpinnerNumberModel(20, 1, 100, 1));	//	SpinnerNumberModel model = new SpinnerNumberModel(value, min, max, step);
+		spinner.setBounds(240, 60, 80, 20);
+		panel2.add(spinner);
+		//	性別
+		btn_group = new ButtonGroup();
+		rb1 = new JRadioButton("男性", false);	rb1.setBounds(80, 80, 60, 20);
+		rb2 = new JRadioButton("女性", false);	rb2.setBounds(140, 100, 60, 20);
+		btn_group.add(rb1);	btn_group.add(rb2);
+		panel2.add(rb1);	panel2.add(rb2);
+		//	興趣
+		cb1 = new JCheckBox("電腦");	cb1.setBounds(80, 100, 60, 20);
+		cb2 = new JCheckBox("唱歌");	cb2.setBounds(140, 100, 60, 20);
+		cb3 = new JCheckBox("電影");	cb3.setBounds(200, 100, 60, 20);
+		cb4 = new JCheckBox("繪圖");	cb4.setBounds(260, 100, 60, 20);
+		cb5 = new JCheckBox("旅遊");	cb5.setBounds(320, 100, 60, 20);
+		panel2.add(cb1);	panel2.add(cb2);	panel2.add(cb3);
+		panel2.add(cb4);	panel2.add(cb5);
+		//	學歷
+		c_box = new JComboBox<Object>(edu_label);	//	new JComboBox(edu_label)
+		c_box.setBounds(80, 130, 100, 20);
+		panel2.add(c_box);
+		//	居住地
+		list = new JList<Object>(city_label);
+		JScrollPane s_pane = new JScrollPane(list);
+		s_pane.setBounds(270, 130, 80, 80);
+		panel2.add(s_pane);
+		//	新增下方取消、確認、刪除等按鈕
+		qb31 = new JButton("取消"); qb31.setBounds(270, 230, 60, 30);
+		qb32 = new JButton("確認"); qb32.setBounds(340, 230, 60, 30);
+		qb33 = new JButton("刪除"); qb33.setBounds(410, 230, 60, 30);
+		qb31.addActionListener(reset);
+		qb32.addActionListener(submit);
+		qb33.addActionListener(delete);
 		
 		
 		//	JFrame視窗基本設定
@@ -240,7 +295,38 @@ class mysqlFrame4 extends JFrame {
 	}
 	
 	//	介面結束處理
-
+	protected void endProcess() {
+		id.setEnabled(true);		id.setText("");
+		password.setEnabled(true);	password.setText("");
+		panel2.setVisible(false);
+		qb11.setEnabled(true);
+		qb12.setEnabled(true);
+		qb33.setEnabled(true);	//	恢復刪除按鈕功能
+		return;
+	}
+	
+	//	取消按鈕事件監聽
+	public ActionListener reset = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			endProcess();	//	無任何動作，直接進入>介面結束處理
+		}
+	};
+	//	確認按鈕事件監聽
+	public ActionListener submit = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+		}
+	};
+	//	刪除按鈕事件監聽
+	public ActionListener delete = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+		}
+	};
+	
 }
 
 public class HW02_JDBC_Member01_4 {
