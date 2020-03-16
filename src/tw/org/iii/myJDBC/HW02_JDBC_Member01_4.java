@@ -316,6 +316,26 @@ class mysqlFrame4 extends JFrame {
 	public ActionListener submit = new ActionListener() {
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			int mgender; // 供設定性別狀態識別用途
+			Boolean mcb1, mcb2, mcb3, mcb4, mcb5;	// 紀錄興趣是否被勾選
+			//	讀取性別選擇圓鈕，將boolean值轉為數字代號
+			if (rb1.isSelected()) {
+				mgender = 1;
+			}else mgender = 2;
+			//	取得興趣複選方鈕的boolean值
+			mcb1 = cb1.isSelected();
+			mcb2 = cb2.isSelected();
+			mcb3 = cb3.isSelected();
+			mcb4 = cb4.isSelected();
+			mcb5 = cb5.isSelected();
+			//	如果在註冊狀態btn_act == 1，資料庫插入新資料
+			if (btn_act == 1) {
+				input_sql = "INSERT INTO personal_data (acc_id, password, date_join, name, gender, age, habbit1, habbit2, habbit3, habbit4, habbit5, education, home) "
+						+ "VALUES(" + id_get + ", " + password_get + ", " + dateNow + ", " + textName.getText().trim() + ", " + mgender + ", " + spinner.getValue() + ", " + mcb1 + ", " + mcb2 + ", " + mcb3 + ", " + mcb4 + ", " + mcb5 + ", " + c_box.getSelectedIndex() + ", " + list.getSelectedIndex() + ");";
+			} else {
+				//	如果在登入狀態btn_act == 2，資料庫對現有資料的內容更新
+				input_sql = "UPDATE personal_data SET name = " + textName.getText().trim() + ", gender = " + mgender + ", age = " + spinner.getValue() + ", habbit1 = " + mcb1 + ", habbit2 = " + mcb2 + ", habbit3 = " + mcb3 + ", habbit4 = " + mcb4 + ", habbit5 = " + mcb5 + ", education = " + c_box.getSelectedIndex() + ", home = " + list.getSelectedIndex() + "WHERE acc_id = " + id_get + "AND password = " + password_get + ";";
+			}
 			
 		}
 	};
