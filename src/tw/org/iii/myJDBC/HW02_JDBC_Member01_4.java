@@ -17,6 +17,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -280,6 +281,12 @@ class mysqlFrame4 extends JFrame {
 		password.setText("");
 	}
 	
+	//	自訂Method: 資料庫異動成功對話框
+	private void correctMessage(String msg) {
+		String message = msg;
+		JOptionPane.showMessageDialog(null, message, "資料庫異動", JOptionPane.INFORMATION_MESSAGE);
+	}
+	
 	//	panel2介面初值處理
 	protected void initialProcess() {
 		id.setEnabled(false);	//	上方輸入介面無作用
@@ -331,28 +338,59 @@ class mysqlFrame4 extends JFrame {
 			//	如果在註冊狀態btn_act == 1，資料庫插入新資料
 			if (btn_act == 1) {
 				input_sql = "INSERT INTO personal_data (acc_id, password, date_join, name, gender, age, habbit1, habbit2, habbit3, habbit4, habbit5, education, home) "
-						+ "VALUES(" + id_get + ", " + password_get + ", " + dateNow + ", " + textName.getText().trim() + ", " + mgender + ", " + spinner.getValue() + ", " + mcb1 + ", " + mcb2 + ", " + mcb3 + ", " + mcb4 + ", " + mcb5 + ", " + c_box.getSelectedIndex() + ", " + list.getSelectedIndex() + ");";
+						+ "VALUES( ?, ?, " + dateNow + ", " + textName.getText().trim() + ", " + mgender + ", " + spinner.getValue() + ", " + mcb1 + ", " + mcb2 + ", " + mcb3 + ", " + mcb4 + ", " + mcb5 + ", " + c_box.getSelectedIndex() + ", " + list.getSelectedIndex() + ");";
 			} else {
 				//	如果在登入狀態btn_act == 2，資料庫對現有資料的內容更新
 				input_sql = "UPDATE personal_data SET name = " + textName.getText().trim() + ", gender = " + mgender + ", age = " + spinner.getValue() + ", habbit1 = " + mcb1 + ", habbit2 = " + mcb2 + ", habbit3 = " + mcb3 + ", habbit4 = " + mcb4 + ", habbit5 = " + mcb5 + ", education = " + c_box.getSelectedIndex() + ", home = " + list.getSelectedIndex() + "WHERE acc_id = " + id_get + "AND password = " + password_get + ";";
 			}
-			
+			try {
+				pstmt = conn.prepareStatement(input_sql);
+				pstmt.setString(1, id_get);
+				pstmt.setString(2, password_get);
+				ResultSet rs = pstmt.executeQuery();
+				if (btn_act == 1) {
+					correctMessage("新會員註冊成功");
+				}else correctMessage("資料更新成功");
+				endProcess();	//	介面結束處理
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+				errorMessage("資料庫發生錯誤");
+			}
 		}
 	};
 	//	刪除按鈕事件監聽
 	public ActionListener delete = new ActionListener() {
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			
+			//	刪除資料前需再次確認
+			JOptionPane option = new JOptionPane("請確認刪除或取消",JOptionPane.QUESTION_MESSAGE,JOptionPane.OK_CANCEL_OPTION);
+			JDialog dialog = option.createDialog(null, "刪除確認");
+			dialog.setVisible(true);
+			Object answer = option.getValue(); // 回傳值: YES為0, NO為1
+			if (answer != null) {
+				if ((Integer)answer == 0) {
+					//	資料庫刪除該筆資料
+					input_sql = "DELETE FROM personal_data WHERE acc_id = ? AND password = ?;";
+					try {
+						pstmt = conn.prepareStatement(input_sql);
+						pstmt.setString(1, id_get);
+						pstmt.setString(2, password_get);
+						pstmt.executeQuery();
+						correctMessage("資料刪除成功");
+						endProcess();
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+						errorMessage("資料庫發生錯誤");
+					}
+				}
+			}
 		}
 	};
-	
 }
 
 public class HW02_JDBC_Member01_4 {
 
 	public static void main(String[] args) {
-		
+		new mysqlFrame4();
 	}
-
 }
