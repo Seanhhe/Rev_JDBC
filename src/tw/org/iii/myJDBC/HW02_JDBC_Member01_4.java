@@ -10,8 +10,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.EventObject;
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -47,8 +49,9 @@ class mysqlFrame4 extends JFrame {
 		ResultSet result;
 		
 		//	增加文字、按鈕等物件
-		String id_get, password_get, dateNow, input_sql;
+		String id_get, password_get, temp_password, dateNow, input_sql;
 		int btn_act;	// 設定給user按鈕狀態，1 = 註冊，2 = 登入
+		Integer year, month, day;
 		JLabel itemQ1, itemQ2; // 帳號&密碼
 		JTextField id;
 		JPasswordField password;
@@ -92,17 +95,64 @@ class mysqlFrame4 extends JFrame {
 		//	建立使用者介面
 //		((JFrame) container).getContentPane();
 		//	取得日期字串供加入日期使用
-//		Date date = new Date(); //	java.util.Date (官方建議少用)
-		SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-		dateNow = sDateFormat.toString();	// 雖然可快速把日期轉換成字串放入"加入日期"，若該日期還要供資料庫當作Date型別使用就不合適了
+		Calendar calendar = Calendar.getInstance();	// 真正的日期時間
+		year = calendar.get(Calendar.YEAR);
+		month = calendar.get(Calendar.MONTH) + 1; // 0是指一月份
+		day = calendar.get(Calendar.DAY_OF_MONTH);
+		dateNow = year.toString() + "-" + month.toString() + "-" + day.toString(); // 給使用者看的字串格式日期時間
+		/**		
+		 * 		1)
+		 * 		Java.sql.Timestamp
+		 * 		繼承java.util.Date。包含了年月日時分秒奈秒(nano)更多資訊。在資料庫相關操作中使用，例如
+		 * 		ResultSet.getTimestamp，preparedStatement.setTimeStamp等。
+		 * 		例如：資料庫中某欄位為Date型別，則使用getTimestamp能將年月日時分秒資訊取出。但使用getDate只能取出年月日。
+		 * 		因此，一搬推薦使用getTimestamp。
+		 * 		
+		 * 		// java.util.Calendar轉換為java.sql.Timestamp
+		 * 		new Timestamp(Calendar.getInstance().getTimeInMillis());
+		 * 		
+		 * 		// java.util.Date轉換為java.sql.Timestamp
+		 * 		new Timestamp(date.getTime());
+		 * 		
+		 * 		//	String轉換為java.sql.Timestamp
+		 * 		//	String格式：yyyy-mm-dd hh:mm:ss [.f...]，方括號表示可選
+		 * 		Timestamp.valueOf("2020-03-20 13:56:30");
+		 * 
+		 * 		2)
+		 * 		Java.util.Calendar
+		 * 		包含年月日時分秒毫秒等資訊。(用來取代 java.util.Date)
+		 * 		
+		 * 		// Date轉為Calendar
+		 * 		Date date = new Date();
+		 * 		Calendar calendar = Calendar.getInstance();
+		 * 		calendar.setTime(date);
+		 * 
+		 * 		// Calendar轉Date
+		 * 		Calendar ca = Calendar.getInstance();
+		 * 		Date d = (Date) ca.getTime();
+		 * 
+		 * 		3)
+		 * 		Java.sql.Date
+		 * 		包含年月日資訊。
+		 * 		繼承自java.util.Date。在資料庫操作中使用，
+		 * 		例如 ResultSet.getDate、preparedStatement.setDate。
+		 * 
+		 * 		// java.util.Date 轉 java.sql.Date
+		 * 		new java.sql.Date(utilDate.getTime()); 
+		 * 		上面utilDate為java.util.Date型別的物件。
+		 */
+//		Timestamp toSqlTimestamp = new Timestamp(Calendar.getInstance().getTimeInMillis()); // 備用給MySQL的DATE型態
+//		Date toSqlDate = (Date)Calendar.getInstance().getTime();
+		
+		
 		//	配置帳號密碼輸入欄位及註冊、登入按鈕與監聽事件
 		panel1 = new JPanel();
-		panel1.setBounds(0, 0, 790, 40);
+		panel1.setBounds(0, 0, 500, 40);
 		panel1.setBackground(Color.LIGHT_GRAY);
 		itemQ1 = new JLabel("帳號 : ");
 		itemQ2 = new JLabel("密碼 : ");
-		id = new JTextField("輸入英文數字",10);	// 括弧內寫預設寬度(行數)
-		password = new JPasswordField("輸入10個英文數字",10); // 括弧內寫預設寬度(行數)
+		id = new JTextField("輸入英文數字",12);	// 括弧內寫預設寬度(行數)
+		password = new JPasswordField(12); // 括弧內寫預設寬度(行數)
 		qb11 = new JButton("註冊");
 		qb12 = new JButton("登入");
 		qb11.addActionListener(checkActionListener);
@@ -117,7 +167,7 @@ class mysqlFrame4 extends JFrame {
 		
 		//	新增面板2=>配置個人資料項目及內容
 		panel2 = new JPanel();
-		panel2.setBounds(0, 40, 790, 500);
+		panel2.setBounds(0, 40, 500, 200);
 		panel2.setLayout(null);	//	null表示使用絕對座標。
 		item1 = new JLabel("姓名：");	item1.setBounds(40, 60, 40, 20);
 		item2 = new JLabel("年齡：");	item2.setBounds(200, 60, 40, 20);
@@ -142,8 +192,8 @@ class mysqlFrame4 extends JFrame {
 		//	性別
 		btn_group = new ButtonGroup();
 		rb1 = new JRadioButton("男性", false);	rb1.setBounds(80, 80, 60, 20);
-		rb2 = new JRadioButton("女性", false);	rb2.setBounds(140, 100, 60, 20);
-		btn_group.add(rb1);	btn_group.add(rb2);
+		rb2 = new JRadioButton("女性", false);	rb2.setBounds(140, 80, 60, 20);
+		btn_group.add(rb1);	btn_group.add(rb2);	// 加入ButtonGroup才可單選
 		panel2.add(rb1);	panel2.add(rb2);
 		//	興趣
 		cb1 = new JCheckBox("電腦");	cb1.setBounds(80, 100, 60, 20);
@@ -169,11 +219,13 @@ class mysqlFrame4 extends JFrame {
 		qb31.addActionListener(reset);
 		qb32.addActionListener(submit);
 		qb33.addActionListener(delete);
-		
+		panel2.add(qb31);	panel2.add(qb32);	panel2.add(qb33);
+		add(panel2);
+		panel2.setVisible(false);	// 尚未註冊或登入前將個人資料面板隱藏
 		
 		//	JFrame視窗基本設定
 		setTitle("會員註冊登錄系統");
-		setSize(800, 600);
+		setSize(500, 360);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setVisible(true);
 	}
@@ -184,19 +236,21 @@ class mysqlFrame4 extends JFrame {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			id_get = id.getText().trim();	// 取得去除頭尾空白格的字串，再給id_get
-			password_get = password.getPassword().toString().trim();
+			password_get = String.valueOf(password.getPassword()).trim();
 			
 			//	如果帳號或密碼欄位空白則不處理
 			if ("".equals(id_get) || "".equals(password_get)) {
+				warningMessage("帳號及密碼欄位請勿空白");
 				return;
 			}
-			//	如果帳號密碼超過20字則顯示警告，並且不處理
-			if (id_get.length() > 10 || password_get.length() > 10) {
+			//	如果帳號密碼超過10字則顯示警告，並且不處理
+			if ((id_get.length() > 10) || (password_get.length() > 10)) {
 				warningMessage("帳號最多10個字元，密碼8-10個字元");
 				return;
 			}
 			//	正規表示法	預防 SQL Injection
-			if (!(id_get.matches("^[0-9a-zA-Z._]{1,10}$") && password_get.matches("^[0-9a-zA-Z._@]{8-10}$"))) {
+			if (!(id_get.matches("^[0-9a-zA-Z._]{1,10}$") && password_get.matches("^[0-9a-zA-Z._@]{8,10}$"))) {
+				warningMessage("帳號只能輸入數字英文、.、_\n密碼只能輸入數字英文、.、_、@");
 				return;
 			}
 			//	依據輸入帳號&密碼查詢資料庫
@@ -243,7 +297,7 @@ class mysqlFrame4 extends JFrame {
 						//	如果按下的是註冊，可查詢、更正資料
 						btn_act = 1;	// 使用者按鈕狀態 1 = 註冊 狀態
 						initialProcess();	//	介面初值處理
-						item8.setText(dateNow);	//	加入日期時間由系統抓取simpleDateFormat
+						item8.setText(dateNow);	//	加入日期時間由系統抓取Calendar物件的時間
 						//	個人資料內容初值由系統提供 (註冊狀態)
 						textName.setText("");	//	姓名欄位空白
 						spinner.setValue(20);	//	年齡欄位預設20
@@ -253,6 +307,9 @@ class mysqlFrame4 extends JFrame {
 						cb5.setSelected(false);	//	興趣欄位預設空白
 						c_box.setSelectedIndex(0);	//學歷預設欄位博士
 						list.setSelectedIndex(0);	//居住地預設欄位台北
+						System.out.println("sean");
+						System.out.println("id_get: " + id_get);
+						System.out.println("password_get: " + password_get);
 					}else {
 						//	如果使用者按下的是登入，因為不符合帳號密碼，所以不能繼續處理
 						warningMessage("帳號或密碼錯誤");
