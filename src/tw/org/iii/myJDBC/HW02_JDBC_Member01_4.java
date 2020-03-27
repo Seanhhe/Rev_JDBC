@@ -5,6 +5,7 @@ import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,7 +14,6 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -73,6 +73,7 @@ class mysqlFrame4 extends JFrame {
 		String[] edu_label = {"博士", "碩士", "大學", "高中", "國中", "國小"}; // 學歷內容陣列
 		String[] city_label = {"台北", "桃園", "新竹", "苗栗", "台中", "南投", "彰化", "雲林", 
 								"嘉義", "台南", "高雄", "屏東", "花蓮", "宜蘭", "台東", "澎湖"}; // 居住地內容陣列
+		java.sql.Date toSqlDate;
 	public mysqlFrame4() {
 		// 資料庫載入驅動程式
 		try {
@@ -140,9 +141,22 @@ class mysqlFrame4 extends JFrame {
 		 * 		// java.util.Date 轉 java.sql.Date
 		 * 		new java.sql.Date(utilDate.getTime()); 
 		 * 		上面utilDate為java.util.Date型別的物件。
+		 * 
+		 * 		// Calendar 轉 java.sql.Date
+		 * 		Calendar ca = Calendar.getInstance();
+		 * 		String year, month, day, stringDate;
+		 * 		year = ca.get(Calendar.YEAR); month = ca.get(Calendar.MONTH) + 1; day = ca.get(Calendar.DAY_OF_MONTH);
+		 * 		stringDate = year.toString() + "-" + month.toString() + "-" + day.toString();
+		 * 		字串格式必須符合yyyy-mm-dd，才能正確使用valueOf()方法做轉換
+		 * 		Date toSqlDate = Date.valueOf(stringDate);
+		 * 		搭配pstmt.setDate(index順序, toSqlDate);
+		 * 		即可把toSqlDate的日期傳到MySQL資料表內的DATE格式之欄位
 		 */
-//		Timestamp toSqlTimestamp = new Timestamp(Calendar.getInstance().getTimeInMillis()); // 備用給MySQL的DATE型態
-//		Date toSqlDate = (Date)Calendar.getInstance().getTime();
+//		Timestamp toSqlTimestamp = new Timestamp(Calendar.getInstance().getTimeInMillis()); // 備用給MySQL的Timestamp型態
+//		String calendarToString = Calendar.getInstance().toString();	// 因為得到字串不是yyyy-mm-dd格式，所以編譯出現錯誤
+//		Date toSqlDate = Date.valueOf(calendarToString);
+		Date toSqlDate = Date.valueOf(dateNow);
+		System.out.println("(158)toSqlDate: " + toSqlDate);
 		
 		
 		//	配置帳號密碼輸入欄位及註冊、登入按鈕與監聽事件
@@ -266,7 +280,7 @@ class mysqlFrame4 extends JFrame {
 						warningMessage("帳號已被註冊");
 						return;
 					} else {
-						if ((e.getSource() == qb12) && password_get == result.getString("password").trim()) {
+						if ((e.getSource() == qb12) && (password_get == result.getString("password").trim())) {
 							//	如果按下的是登入，且密碼正確。
 							//可查詢、修改、刪除資料。
 							btn_act = 2;	// 設定為2代表已按下登入
@@ -287,6 +301,7 @@ class mysqlFrame4 extends JFrame {
 							c_box.setSelectedIndex(result.getInt("education"));	//	讀取資料表的學歷欄位 (代號 0~5)
 							list.setSelectedIndex(result.getInt("home"));	//	居住地代號：1-16
 						} else {
+							System.out.println("password From MySQL: " + result.getString("password").trim());
 							warningMessage("密碼錯誤");
 							return;
 						}
@@ -297,19 +312,7 @@ class mysqlFrame4 extends JFrame {
 						//	如果按下的是註冊，可查詢、更正資料
 						btn_act = 1;	// 使用者按鈕狀態 1 = 註冊 狀態
 						initialProcess();	//	介面初值處理
-						item8.setText(dateNow);	//	加入日期時間由系統抓取Calendar物件的時間
-						//	個人資料內容初值由系統提供 (註冊狀態)
-						textName.setText("");	//	姓名欄位空白
-						spinner.setValue(20);	//	年齡欄位預設20
-						rb1.setSelected(false);	rb2.setSelected(false);	//	性別預設空白
-						cb1.setSelected(false);	cb2.setSelected(false);
-						cb3.setSelected(false);	cb4.setSelected(false);
-						cb5.setSelected(false);	//	興趣欄位預設空白
-						c_box.setSelectedIndex(0);	//學歷預設欄位博士
-						list.setSelectedIndex(0);	//居住地預設欄位台北
-						System.out.println("sean");
-						System.out.println("id_get: " + id_get);
-						System.out.println("password_get: " + password_get);
+						defaultValueProcess();	// 預設值寫入處理
 					}else {
 						//	如果使用者按下的是登入，因為不符合帳號密碼，所以不能繼續處理
 						warningMessage("帳號或密碼錯誤");
@@ -329,7 +332,7 @@ class mysqlFrame4 extends JFrame {
 		JOptionPane.showMessageDialog(null, message, "嚴重錯誤", JOptionPane.ERROR_MESSAGE);
 		System.exit(0);
 	}
-	
+
 	//	自訂Method: 錯誤訊息對話面板
 	private void warningMessage(String msg) {
 		String message = msg;
@@ -369,6 +372,28 @@ class mysqlFrame4 extends JFrame {
 		return;
 	}
 	
+	//	重置輸入處理
+	protected void resetProcess(String msg) {
+		String message = msg;
+		JOptionPane.showMessageDialog(null, message, "錯誤訊息", JOptionPane.ERROR_MESSAGE);
+		initialProcess();
+		defaultValueProcess();
+	}
+	
+	//	預設值寫入處理
+	protected void defaultValueProcess() {
+		item8.setText(dateNow);	//	加入日期時間由系統抓取Calendar物件的時間
+		//	個人資料內容初值由系統提供 (註冊狀態)
+		textName.setText("");	//	姓名欄位空白
+		spinner.setValue(28);	//	年齡欄位預設28
+		rb1.setSelected(false);	rb2.setSelected(false);	//	性別預設空白
+		cb1.setSelected(false);	cb2.setSelected(false);
+		cb3.setSelected(false);	cb4.setSelected(false);
+		cb5.setSelected(false);	//	興趣欄位預設空白
+		c_box.setSelectedIndex(0);	//學歷預設欄位博士
+		list.setSelectedIndex(0);	//居住地預設欄位台北
+	}
+	
 	//	取消按鈕事件監聽
 	public ActionListener reset = new ActionListener() {
 		@Override
@@ -380,38 +405,55 @@ class mysqlFrame4 extends JFrame {
 	public ActionListener submit = new ActionListener() {
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			int mgender; // 供設定性別狀態識別用途
-			Boolean mcb1, mcb2, mcb3, mcb4, mcb5;	// 紀錄興趣是否被勾選
-			//	讀取性別選擇圓鈕，將boolean值轉為數字代號
-			if (rb1.isSelected()) {
-				mgender = 1;
-			}else mgender = 2;
-			//	取得興趣複選方鈕的boolean值
-			mcb1 = cb1.isSelected();
-			mcb2 = cb2.isSelected();
-			mcb3 = cb3.isSelected();
-			mcb4 = cb4.isSelected();
-			mcb5 = cb5.isSelected();
-			//	如果在註冊狀態btn_act == 1，資料庫插入新資料
-			if (btn_act == 1) {
-				input_sql = "INSERT INTO personal_data (acc_id, password, date_join, name, gender, age, habbit1, habbit2, habbit3, habbit4, habbit5, education, home) "
-						+ "VALUES( ?, ?, " + dateNow + ", " + textName.getText().trim() + ", " + mgender + ", " + spinner.getValue() + ", " + mcb1 + ", " + mcb2 + ", " + mcb3 + ", " + mcb4 + ", " + mcb5 + ", " + c_box.getSelectedIndex() + ", " + list.getSelectedIndex() + ");";
-			} else {
-				//	如果在登入狀態btn_act == 2，資料庫對現有資料的內容更新
-				input_sql = "UPDATE personal_data SET name = " + textName.getText().trim() + ", gender = " + mgender + ", age = " + spinner.getValue() + ", habbit1 = " + mcb1 + ", habbit2 = " + mcb2 + ", habbit3 = " + mcb3 + ", habbit4 = " + mcb4 + ", habbit5 = " + mcb5 + ", education = " + c_box.getSelectedIndex() + ", home = " + list.getSelectedIndex() + "WHERE acc_id = " + id_get + "AND password = " + password_get + ";";
-			}
-			try {
-				pstmt = conn.prepareStatement(input_sql);
-				pstmt.setString(1, id_get);
-				pstmt.setString(2, password_get);
-				ResultSet rs = pstmt.executeQuery();
-				if (btn_act == 1) {
-					correctMessage("新會員註冊成功");
-				}else correctMessage("資料更新成功");
-				endProcess();	//	介面結束處理
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-				errorMessage("資料庫發生錯誤");
+			
+			//	正則表示法檢查輸入字元 (這是最後才加入的if判斷)
+			if (("".equals(textName.getText()) || textName.getText().equals("^[^a-zA-Z\u2E80-\u9FA5]{1,10}$"))) {
+				//輸入錯誤
+				resetProcess("請輸入中文或英文，最多10個字元");
+			}else {
+				//輸入正確
+				// 區塊開始
+				int mgender; // 供設定性別狀態識別用途
+				Boolean mcb1, mcb2, mcb3, mcb4, mcb5;	// 紀錄興趣是否被勾選
+				//	讀取性別選擇圓鈕，將boolean值轉為數字代號
+				if (rb1.isSelected()) {
+					mgender = 1;
+				}else mgender = 2;
+				//	取得興趣複選方鈕的boolean值
+				mcb1 = cb1.isSelected();
+				mcb2 = cb2.isSelected();
+				mcb3 = cb3.isSelected();
+				mcb4 = cb4.isSelected();
+				mcb5 = cb5.isSelected();
+				
+				try {
+					//如果在註冊狀態btn_act == 1，資料庫插入新資料
+					if (btn_act == 1) {
+						input_sql = "INSERT INTO personal_data (acc_id, password, date_join, name, gender, age, habbit1, habbit2, habbit3, habbit4, habbit5, education, home) "
+								+ "VALUES( ?, ?, ?, ?," + mgender + ", " + spinner.getValue() + ", " + mcb1 + ", " + mcb2 + ", " + mcb3 + ", " + mcb4 + ", " + mcb5 + ", " + c_box.getSelectedIndex() + ", " + list.getSelectedIndex() + ");";
+						pstmt = conn.prepareStatement(input_sql);
+						pstmt.setString(1, id_get);
+						pstmt.setString(2, password_get);
+						pstmt.setDate(3, toSqlDate);
+						pstmt.setString(4, textName.getText().trim());
+					} else {
+						//	如果在登入狀態btn_act == 2，資料庫對現有資料的內容更新
+						input_sql = "UPDATE personal_data SET name = ?, gender = " + mgender + ", age = " + spinner.getValue() + ", habbit1 = " + mcb1 + ", habbit2 = " + mcb2 + ", habbit3 = " + mcb3 + ", habbit4 = " + mcb4 + ", habbit5 = " + mcb5 + ", education = " + c_box.getSelectedIndex() + ", home = " + list.getSelectedIndex() + "WHERE acc_id = " + id_get + "AND password = " + password_get + ";";
+						pstmt = conn.prepareStatement(input_sql);
+						pstmt.setString(1, textName.getText().trim());
+					}
+					System.out.println("(444)dateNow: " + dateNow);
+					pstmt.executeUpdate();
+					
+					System.out.println("(447)sean");
+					if (btn_act == 1) {
+						correctMessage("新會員註冊成功");
+					}else correctMessage("資料更新成功");
+					endProcess();	//	介面結束處理
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+					errorMessage("資料庫發生錯誤");
+				}	// 區塊結束
 			}
 		}
 	};
