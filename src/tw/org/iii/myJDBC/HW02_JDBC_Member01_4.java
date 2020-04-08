@@ -41,6 +41,17 @@ import javax.swing.SpinnerNumberModel;
  * 		> 取得資料庫內的存檔紀錄 > (結束)按鈕監聽事件 : 註冊、登入 > 新增面板2
  */
 
+/*	MySQL 8的日期時間範圍
+ * 	文件參考：https://dev.mysql.com/doc/refman/8.0/en/datetime.html
+ * 	重點摘要：
+ * 	DATE : 'YYYY-MM-DD'，支援範圍 '1000-01-01' to '9999-12-31'
+ * 	DATETIME : 'YYYY-MM-DD hh:mm:ss'，支援範圍'1000-01-01 00:00:00' to '9999-12-31 23:59:59'
+ * 	TIMESTAMP : 支援範圍'1970-01-01 00:00:01' UTC to '2038-01-19 03:14:07' UTC
+ * 
+ * 	時區問題：
+ * 	serverTimeZone=Asia/Taipei 即可解決java.sql.Date 存入 MySQL Date欄位時，時間少一天(TimeStamp少13小時)的問題
+ */
+
 class mysqlFrame4 extends JFrame {
 //	資料庫相關物件
 		Connection conn;
@@ -59,6 +70,7 @@ class mysqlFrame4 extends JFrame {
 		JButton qb31, qb32, qb33; // 按鈕:取消、確認、刪除
 		JPanel panel1, panel2; // 面板群組:登入註冊面板、會員資料面板
 		JLabel item7, item8; // item7:加入日期、item8:讀取資料庫資料表的欄位(加入日期)
+		Date toSqlDate;
 		
 		//	建立容器物件(可放入JPanel)
 		Container container;
@@ -73,7 +85,6 @@ class mysqlFrame4 extends JFrame {
 		String[] edu_label = {"博士", "碩士", "大學", "高中", "國中", "國小"}; // 學歷內容陣列
 		String[] city_label = {"台北", "桃園", "新竹", "苗栗", "台中", "南投", "彰化", "雲林", 
 								"嘉義", "台南", "高雄", "屏東", "花蓮", "宜蘭", "台東", "澎湖"}; // 居住地內容陣列
-		java.sql.Date toSqlDate;
 	public mysqlFrame4() {
 		// 資料庫載入驅動程式
 		try {
@@ -84,7 +95,7 @@ class mysqlFrame4 extends JFrame {
 		// 資料庫連線
 		try {
 			conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hw_jdbc_member01"
-					+ "?serverTimezone=CST&user=root&password=root");
+					+ "?serverTimezone=Asia/Taipei&user=root&password=root"); // &useUnicode=true&characterEncoding=UTF-8
 			stmt = conn.createStatement();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -108,6 +119,8 @@ class mysqlFrame4 extends JFrame {
 		 * 		ResultSet.getTimestamp，preparedStatement.setTimeStamp等。
 		 * 		例如：資料庫中某欄位為Date型別，則使用getTimestamp能將年月日時分秒資訊取出。但使用getDate只能取出年月日。
 		 * 		因此，一搬推薦使用getTimestamp。
+		 * 
+		 * 		另有一說，使用Timestamp，等到西元2038年2月時程式會出錯。(適合紀錄變更)
 		 * 		
 		 * 		// java.util.Calendar轉換為java.sql.Timestamp
 		 * 		new Timestamp(Calendar.getInstance().getTimeInMillis());
@@ -155,10 +168,8 @@ class mysqlFrame4 extends JFrame {
 //		Timestamp toSqlTimestamp = new Timestamp(Calendar.getInstance().getTimeInMillis()); // 備用給MySQL的Timestamp型態
 //		String calendarToString = Calendar.getInstance().toString();	// 因為得到字串不是yyyy-mm-dd格式，所以編譯出現錯誤
 //		Date toSqlDate = Date.valueOf(calendarToString);
-		Date toSqlDate = Date.valueOf(dateNow);
-		System.out.println("(158)toSqlDate: " + toSqlDate);
-		
-		
+		toSqlDate = Date.valueOf(dateNow);
+		System.out.println("toSqlDate: " + toSqlDate);
 		//	配置帳號密碼輸入欄位及註冊、登入按鈕與監聽事件
 		panel1 = new JPanel();
 		panel1.setBounds(0, 0, 500, 40);
@@ -250,7 +261,8 @@ class mysqlFrame4 extends JFrame {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			id_get = id.getText().trim();	// 取得去除頭尾空白格的字串，再給id_get
-			password_get = String.valueOf(password.getPassword()).trim();
+//			password_get = String.valueOf(password.getPassword()).trim();
+			password_get = new String(password.getPassword()).trim();
 			
 			//	如果帳號或密碼欄位空白則不處理
 			if ("".equals(id_get) || "".equals(password_get)) {
@@ -280,7 +292,8 @@ class mysqlFrame4 extends JFrame {
 						warningMessage("帳號已被註冊");
 						return;
 					} else {
-						if ((e.getSource() == qb12) && (password_get == result.getString("password").trim())) {
+//						if ((e.getSource() == qb12) && (password_get == result.getString("password").trim())) {		// 錯誤比較
+						if ((e.getSource() == qb12) && (password_get.equals(result.getString("password").trim()))) {		// 正確比較
 							//	如果按下的是登入，且密碼正確。
 							//可查詢、修改、刪除資料。
 							btn_act = 2;	// 設定為2代表已按下登入
@@ -301,7 +314,6 @@ class mysqlFrame4 extends JFrame {
 							c_box.setSelectedIndex(result.getInt("education"));	//	讀取資料表的學歷欄位 (代號 0~5)
 							list.setSelectedIndex(result.getInt("home"));	//	居住地代號：1-16
 						} else {
-							System.out.println("password From MySQL: " + result.getString("password").trim());
 							warningMessage("密碼錯誤");
 							return;
 						}
@@ -407,9 +419,10 @@ class mysqlFrame4 extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			
 			//	正則表示法檢查輸入字元 (這是最後才加入的if判斷)
-			if (("".equals(textName.getText()) || textName.getText().equals("^[^a-zA-Z\u2E80-\u9FA5]{1,10}$"))) {
+//			if (("".equals(textName.getText()) || textName.getText().equals("^[^a-zA-Z\u2E80-\u9FA5]{1,10}$"))) {	// equals錯誤用法
+			if (("".equals(textName.getText()) || textName.getText().matches("^[^a-zA-Z\u2E80-\u2FDF\u4E00-\u9FFF]{1,10}$"))) {
 				//輸入錯誤
-				resetProcess("請輸入中文或英文，最多10個字元");
+				resetProcess("姓名請輸入中文或英文，最多10個字元\n資料已重置，請重新輸入正確資料"); // 資料reset，需重新輸入所有資料
 			}else {
 				//輸入正確
 				// 區塊開始
@@ -438,17 +451,22 @@ class mysqlFrame4 extends JFrame {
 						pstmt.setString(4, textName.getText().trim());
 					} else {
 						//	如果在登入狀態btn_act == 2，資料庫對現有資料的內容更新
-						input_sql = "UPDATE personal_data SET name = ?, gender = " + mgender + ", age = " + spinner.getValue() + ", habbit1 = " + mcb1 + ", habbit2 = " + mcb2 + ", habbit3 = " + mcb3 + ", habbit4 = " + mcb4 + ", habbit5 = " + mcb5 + ", education = " + c_box.getSelectedIndex() + ", home = " + list.getSelectedIndex() + "WHERE acc_id = " + id_get + "AND password = " + password_get + ";";
+//						input_sql = "UPDATE personal_data SET name = ?, gender = " + mgender + ", age = " + spinner.getValue() + ", habbit1 = " + mcb1 + ", habbit2 = " + mcb2 + ", habbit3 = " + mcb3 + ", habbit4 = " + mcb4 + ", habbit5 = " + mcb5 + ", education = " + c_box.getSelectedIndex() + ", home = " + list.getSelectedIndex() + "WHERE acc_id = " + id_get + " AND password = " + password_get + ";";
+						// 注意字串前後得多加單引號'
+						input_sql = "UPDATE personal_data SET name = ?, gender = ?, age = ?, habbit1 = ?, habbit2 = ?, habbit3 = ?, habbit4 = ?, habbit5 = ?, education = " + c_box.getSelectedIndex() + ", home = " + list.getSelectedIndex() + " WHERE acc_id = '" + id_get + "' AND password = '" + password_get + "';";
 						pstmt = conn.prepareStatement(input_sql);
-						pstmt.setString(1, textName.getText().trim());
+						pstmt.setString(1, textName.getText().trim());	pstmt.setInt(2, mgender);
+						pstmt.setObject(3, spinner.getValue());			pstmt.setBoolean(4, mcb1);
+						pstmt.setBoolean(5, mcb2);						pstmt.setBoolean(6, mcb3);
+						pstmt.setBoolean(7, mcb4);						pstmt.setBoolean(8, mcb5);
 					}
-					System.out.println("(444)dateNow: " + dateNow);
 					pstmt.executeUpdate();
 					
-					System.out.println("(447)sean");
 					if (btn_act == 1) {
 						correctMessage("新會員註冊成功");
-					}else correctMessage("資料更新成功");
+					}else {
+						correctMessage("資料更新成功");
+					}
 					endProcess();	//	介面結束處理
 				} catch (SQLException e1) {
 					e1.printStackTrace();
@@ -474,7 +492,7 @@ class mysqlFrame4 extends JFrame {
 						pstmt = conn.prepareStatement(input_sql);
 						pstmt.setString(1, id_get);
 						pstmt.setString(2, password_get);
-						pstmt.executeQuery();
+						pstmt.executeUpdate();
 						correctMessage("資料刪除成功");
 						endProcess();
 					} catch (SQLException e1) {
