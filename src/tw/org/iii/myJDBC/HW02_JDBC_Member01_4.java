@@ -38,7 +38,7 @@ import javax.swing.SpinnerNumberModel;
  * 		先寫出基本視窗設定 > 增加文字 按鈕物件 > 增加相關資料庫物件 > 增加容器物件讓JPanel放
  * 		> 資料庫載入驅動程式 > 自訂Method: 資料庫嚴重錯誤對話框 > 資料庫連線 > 建立使用者介面
  * 		> 按鈕監聽事件 : 註冊、登入 > 自訂Method: 錯誤訊息對話面板 > panel2介面初值處理 
- * 		> 取得資料庫內的存檔紀錄 > (結束)按鈕監聽事件 : 註冊、登入 > 新增面板2
+ * 		> 取得資料庫內的存檔紀錄 > (結束)按鈕監聽事件 : 註冊、登入 > 新增面板2 > 
  */
 
 /*	MySQL 8的日期時間範圍
@@ -454,6 +454,7 @@ class mysqlFrame4 extends JFrame {
 //						input_sql = "UPDATE personal_data SET name = ?, gender = " + mgender + ", age = " + spinner.getValue() + ", habbit1 = " + mcb1 + ", habbit2 = " + mcb2 + ", habbit3 = " + mcb3 + ", habbit4 = " + mcb4 + ", habbit5 = " + mcb5 + ", education = " + c_box.getSelectedIndex() + ", home = " + list.getSelectedIndex() + "WHERE acc_id = " + id_get + " AND password = " + password_get + ";";
 						// 注意字串前後得多加單引號'
 						input_sql = "UPDATE personal_data SET name = ?, gender = ?, age = ?, habbit1 = ?, habbit2 = ?, habbit3 = ?, habbit4 = ?, habbit5 = ?, education = " + c_box.getSelectedIndex() + ", home = " + list.getSelectedIndex() + " WHERE acc_id = '" + id_get + "' AND password = '" + password_get + "';";
+						// id_get與password_get在進入此迴圈前已有檢查輸入字元，故這裡暫時用動態式查詢。
 						pstmt = conn.prepareStatement(input_sql);
 						pstmt.setString(1, textName.getText().trim());	pstmt.setInt(2, mgender);
 						pstmt.setObject(3, spinner.getValue());			pstmt.setBoolean(4, mcb1);
