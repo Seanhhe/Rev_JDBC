@@ -38,7 +38,8 @@ import javax.swing.SpinnerNumberModel;
  * 		先寫出基本視窗設定 > 增加文字 按鈕物件 > 增加相關資料庫物件 > 增加容器物件讓JPanel放
  * 		> 資料庫載入驅動程式 > 自訂Method: 資料庫嚴重錯誤對話框 > 資料庫連線 > 建立使用者介面
  * 		> 按鈕監聽事件 : 註冊、登入 > 自訂Method: 錯誤訊息對話面板 > panel2介面初值處理 
- * 		> 取得資料庫內的存檔紀錄 > (結束)按鈕監聽事件 : 註冊、登入 > 新增面板2 > 取消、確認、刪除的ActionListener建立(包含資料庫CRUD)  > 除錯測試
+ * 		> 取得資料庫內的存檔紀錄 > (結束)按鈕監聽事件 : 註冊、登入 > 新增面板2 
+ * 		> 取消、確認、刪除按鈕的ActionListener建立(包含資料庫CRUD)  > 除錯測試
  */
 
 /*	MySQL 8的日期時間範圍
@@ -92,7 +93,7 @@ class mysqlFrame4 extends JFrame {
 		} catch (ClassNotFoundException e) {
 			errorMessage("MySQL驅動程式安裝失敗");
 		}
-		// 資料庫連線
+		// 資料庫連線 (先在此測試能否連線)
 		try {
 			conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hw_jdbc_member01"
 					+ "?serverTimezone=Asia/Taipei&user=root&password=root"); // &useUnicode=true&characterEncoding=UTF-8
@@ -102,6 +103,14 @@ class mysqlFrame4 extends JFrame {
 			errorMessage("MySQL無法啟動");
 		} catch (Exception e) {
 			errorMessage("發生其他錯誤");
+		} finally {
+			try {
+				if (stmt != null) stmt.close();
+				if (conn != null) conn.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+				errorMessage("發生關閉錯誤112");
+			}
 		}
 		
 		//	建立使用者介面
@@ -281,6 +290,8 @@ class mysqlFrame4 extends JFrame {
 			}
 			//	依據輸入帳號&密碼查詢資料庫
 			try {
+				conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hw_jdbc_member01"
+						+ "?serverTimezone=Asia/Taipei&useUnicode=true&characterEncoding=UTF-8&user=root&password=root"); // &useUnicode=true&characterEncoding=UTF-8
 				input_sql = "SELECT * FROM personal_data WHERE acc_id=? AND password=?";
 				pstmt = conn.prepareStatement(input_sql);
 				pstmt.setString(1, id_get);
@@ -334,6 +345,15 @@ class mysqlFrame4 extends JFrame {
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 				errorMessage("資料庫發生錯誤");
+			} finally {
+				try {
+					if (result != null) result.close();
+					if (pstmt != null) pstmt.close();
+					if (conn != null) conn.close();
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+					errorMessage("關閉連線錯誤");
+				}
 			}
 		}
 	};
@@ -440,6 +460,8 @@ class mysqlFrame4 extends JFrame {
 				mcb5 = cb5.isSelected();
 				
 				try {
+					conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hw_jdbc_member01"
+							+ "?serverTimezone=Asia/Taipei&useUnicode=true&characterEncoding=UTF-8&user=root&password=root"); // &useUnicode=true&characterEncoding=UTF-8
 					//如果在註冊狀態btn_act == 1，資料庫插入新資料
 					if (btn_act == 1) {
 						input_sql = "INSERT INTO personal_data (acc_id, password, date_join, name, gender, age, habbit1, habbit2, habbit3, habbit4, habbit5, education, home) "
@@ -471,8 +493,16 @@ class mysqlFrame4 extends JFrame {
 					endProcess();	//	介面結束處理
 				} catch (SQLException e1) {
 					e1.printStackTrace();
-					errorMessage("資料庫發生錯誤");
-				}	// 區塊結束
+					errorMessage("資料庫發生錯誤");	//	區塊結束
+				} finally {
+					try {
+						if (pstmt != null) pstmt.close();
+						if (conn != null) conn.close();
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+						errorMessage("關閉連線錯誤");
+					}
+				}
 			}
 		}
 	};
@@ -490,6 +520,8 @@ class mysqlFrame4 extends JFrame {
 					//	資料庫刪除該筆資料
 					input_sql = "DELETE FROM personal_data WHERE acc_id = ? AND password = ?;";
 					try {
+						conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hw_jdbc_member01"
+								+ "?serverTimezone=Asia/Taipei&useUnicode=true&characterEncoding=UTF-8&user=root&password=root"); // &useUnicode=true&characterEncoding=UTF-8
 						pstmt = conn.prepareStatement(input_sql);
 						pstmt.setString(1, id_get);
 						pstmt.setString(2, password_get);
@@ -499,6 +531,14 @@ class mysqlFrame4 extends JFrame {
 					} catch (SQLException e1) {
 						e1.printStackTrace();
 						errorMessage("資料庫發生錯誤");
+					} finally {
+						try {
+							if (pstmt != null) pstmt.close();
+							if (conn != null) conn.close();
+						} catch (SQLException e1) {
+							e1.printStackTrace();
+							errorMessage("關閉連線錯誤");
+						}
 					}
 				}
 			}
