@@ -15,7 +15,7 @@ import java.sql.SQLException;
  * 		注意import的package => java.sql.Connection
  */
 
-public class HW_03 {
+public class HW03 {
 
 	public static void main(String[] args) {
 		String url = "jdbc:mysql://localhost:3306/rev_jdbc_members?serverTimezone=Asia/Taipei";
