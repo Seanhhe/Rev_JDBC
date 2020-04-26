@@ -50,7 +50,7 @@ public class HW13 {
 				 * 	來源資料(頁面原始碼)有換列格式(農委會openData)
 				 * 	一般來說，如果是單列無換列格式，可不用寫while迴圈，一個readLine()就結束。
 				 * 	複習：串流下載的是檔案 (原始碼)
-				 */
+				 */ 
 				sbuf.append(tempLine);	//	tempLine 一列一列的append到sbuf裡
 			}
 			bufReader.close();
