@@ -40,27 +40,27 @@ import org.json.JSONObject;
  *		06. 林道規格 (varchar(15)) = forestRoadSpec
  *		07. 林道種類 (varchar(15)) = forestRoadType
  *		08. 開設年份 (varchar(10)) = buildYear
- *		09. 縣市 (varchar(8)) = county
- *		10. 鄉鎮 (varchar(8)) = township
- *		11. 村里 (varchar(8)) = village
- *		12. 途經聚落 (varchar(15)) = passingSettlement
- *		13. 事業區林班 (varchar(15)) = forestClass
- *		14. 起點 (varchar(15)) = startLocation
- *		15. 終點 (varchar(15)) = endLocation
- *		16. 起點 X 座標 (varchar(15)) = startXcoord
- *		17. 起點 Y 座標 (varchar(15)) = startYcoord
- *		18. 終點 X 座標 (varchar(15)) = endXcoord
- *		19. 終點 Y 座標 (varchar(15)) = endYcoord
+ *		09. 縣市 (varchar(15)) = county
+ *		10. 鄉鎮 (varchar(15)) = township
+ *		11. 村里 (varchar(27)) = village
+ *		12. 林道途經聚落 (varchar(25)) = passingSettlement
+ *		13. 事業區林班 (varchar(50)) = forestClass
+ *		14. 起點 (varchar(35)) = startLocation
+ *		15. 終點 (varchar(30)) = endLocation
+ *		16. 起點X坐標 (varchar(15)) = startXcoord
+ *		17. 起點Y坐標 (varchar(15)) = startYcoord
+ *		18. 終點X坐標 (varchar(15)) = endXcoord
+ *		19. 終點Y坐標 (varchar(15)) = endYcoord
  *		20. 車行長度 (float) = vehicleTravelLength
  *		21. 步行長度 (float) = walkingLength
  *		22. 中斷長度 (float) = breakLength
  *		23. 總長度 (float) = totalLength
- *		24. AC鋪面 (float) = acPaving
- *		25. PC鋪面 (float) = pcPaving
+ *		24. A.C鋪面 (float) = acPaving
+ *		25. P.C鋪面 (float) = pcPaving
  *		26. 碎石面或土石鋪面 (float) = gravelSoilPaving
- *		27. 集水區 (varchar(15)) = catchment
- *		28. 子集水區 (varchar(15)) = subcatchment
- *		29. 進入林班地里程 (varchar(10)) = mileage
+ *		27. 集水區 (varchar(20)) = catchment
+ *		28. 子集水區 (varchar(20)) = subcatchment
+ *		29. 進入林班地里程 (varchar(30)) = mileage
  *		30. 備註 (varchar(45)) = remarks
  *	
  *	(共30個欄位)
@@ -136,8 +136,10 @@ public class HW13 {
 			pstmt = conn.prepareStatement(sqlCmd);
 			String originId = "";
 			String roadLine = "";
-			
+			String remarks = "";
+			Float gravelSoilPaving;
 			for (int i = 0; i < root.length(); i++) {
+			//for (int i = 0; i < 10; i++) {
 				//	把每個陣列內的資料轉成JSON物件
 				JSONObject row = root.getJSONObject(i); // 從jsonArray[i]讀出物件jsonObject
 				int id = row.getInt("編號");
@@ -146,13 +148,13 @@ public class HW13 {
 				//	特殊判斷，避免直接 getString 讀出 null 而出現錯誤
 				if (row.isNull("原編碼")) {
 					originId = null;
-					//originId = "null";	也可正常sysout
+					//originId = "null";	// 方可正常寫入MySQL的varchar()
 				} else {
 					originId = row.getString("原編碼");
 				}
 //				System.out.println(id + " : " + forestRoadName + " : " + originId);
 				if (row.isNull("公路專線")) {
-					roadLine = "null";
+					roadLine = null;
 				}else {
 					roadLine = row.getString("公路專線");
 				}
@@ -162,25 +164,35 @@ public class HW13 {
 				String county = row.getString("縣市");
 				String township = row.getString("鄉鎮");
 				String village = row.getString("村里");
-				String passingSettlement = row.getString("途經聚落");
+				String passingSettlement = row.getString("林道途經聚落");
 				String forestClass = row.getString("事業區林班");
 				String startLocation = row.getString("起點");
 				String endLocation = row.getString("終點");
-				String startXcoord = row.getString("起點 X 座標");
-				String startYcoord = row.getString("起點 Y 座標");
-				String endXcoord = row.getString("終點 X 座標");
-				String endYcoord = row.getString("終點 Y 座標");
+				String startXcoord = row.getString("起點X坐標");
+				String startYcoord = row.getString("起點Y坐標");
+				String endXcoord = row.getString("終點X坐標");
+				String endYcoord = row.getString("終點Y坐標");
 				Float vehicleTravelLength = row.getFloat("車行長度");
 				Float walkingLength = row.getFloat("步行長度");
 				Float breakLength = row.getFloat("中斷長度");
 				Float totalLength = row.getFloat("總長度");
-				Float acPaving = row.getFloat("AC鋪面");
-				Float pcPaving = row.getFloat("PC鋪面");
-				Float gravelSoilPaving = row.getFloat("碎石面或土石鋪面");
+				Float acPaving = row.getFloat("A.C鋪面");
+				Float pcPaving = row.getFloat("P.C鋪面");
+				if (row.isNull("碎石面或土石鋪面")) {
+					gravelSoilPaving = (float)0;
+				}else {
+					gravelSoilPaving = row.getFloat("碎石面或土石鋪面");
+				}
+				
 				String catchment = row.getString("集水區");
 				String subcatchment = row.getString("子集水區");
 				String mileage = row.getString("進入林班地里程");
-				String remarks = row.getString("備註");
+				if (row.isNull("備註")) {
+					remarks = null;
+				} else {
+					remarks = row.getString("備註");
+				}
+				
 				
 				//	4. 設定 pstmt參數(preparedStatement) 對應的問號
 				pstmt.setInt(1, id);
@@ -216,7 +228,7 @@ public class HW13 {
 				
 				//	5. 執行SQL Command
 				pstmt.executeUpdate();	// .execute()也可以
-				System.out.println("Loading toMyDB() OK");
+				System.out.println("Loading toMyDB(" + i + ") OK");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -233,6 +245,8 @@ public class HW13 {
 				e.printStackTrace();
 				System.out.println("關閉連線錯誤");
 			}
+			//	完成時間
+			
 		}
 		
 	}
