@@ -10,6 +10,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.Properties;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -245,8 +246,6 @@ public class HW13 {
 				e.printStackTrace();
 				System.out.println("關閉連線錯誤");
 			}
-			//	完成時間
-			
 		}
 		
 	}
