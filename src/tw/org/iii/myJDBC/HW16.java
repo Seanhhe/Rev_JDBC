@@ -91,7 +91,7 @@ public class HW16 {
 	}
 	
 	public static void main(String[] args) {
-		new HW16();
+//		new HW16();
 	}
 
 }
