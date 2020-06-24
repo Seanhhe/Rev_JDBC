@@ -51,6 +51,7 @@ public class HW19 {
 		int resultInt = 1;
 		String url = "jdbc:mysql://localhost:3306/rev_jdbc_members?serverTimezone=Asia/Taipei";
 		String sqlcmd = "UPDATE hw19 SET img = ?, student = ?, id = ?";
+		//String sqlcmd = "INSERT INTO hw19 ";
 		FileInputStream fin = null;
 		
 		Student s1 = new Student(90, 87, 100);
@@ -64,8 +65,9 @@ public class HW19 {
 			//	讀圖片進來	(二進制串流)
 			pstmt.setBinaryStream(1, fin);
 			//	讀進物件
-			pstmt.setObject(2, s1);
-			pstmt.setInt(3, 1);
+			pstmt.setObject(2, s1);		//	可以存入但無法被正常讀取
+			
+			pstmt.setInt(3, 2);		//	原先是id=1
 			pstmt.executeUpdate();
 			resultInt = pstmt.executeUpdate();
 			if (resultInt != 0) {
