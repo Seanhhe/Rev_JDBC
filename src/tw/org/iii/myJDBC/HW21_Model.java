@@ -2,6 +2,7 @@ package tw.org.iii.myJDBC;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.util.Calendar;
 
 /*		java物件序列化，並儲存到檔案和資料庫
  * 		
