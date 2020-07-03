@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+//import tw.org.iii.myJDBC.HW21_Model;
+
 
 public class HW21_serialObjToDb {
 	private static Connection conn;

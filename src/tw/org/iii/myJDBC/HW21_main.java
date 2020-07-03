@@ -1,12 +1,19 @@
 package tw.org.iii.myJDBC;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+//import tw.org.iii.myJDBC.HW21_Model;
+//import tw.org.iii.myJDBC.HW21_serializableToFile;
+//import tw.org.iii.myJDBC.HW21_serialObjToDb;
+
 /*		HW21_main方法 => 測試物件儲存及讀取
  * 		
- * 
+ * 		注意：測試前請把MySQL的資料表內容刪除乾淨再測試，
+ * 			可避免出現反序列化錯誤。
+ * 			
+ * 		錯誤訊息：java.io.InvalidClassException: XXX; local class incompatible: stream classdesc serialVersionUID
  */
 
 public class HW21_main {
@@ -18,7 +25,7 @@ public class HW21_main {
 		model01.setName("安海瑟威");
 		model01.setYear(39);
 		model01.setCity("加州");
-		model01.setBirth(new Date(1981-2-7));
+		model01.setBirth(LocalDate.of(1981, 2, 7));
 		s2f.saveObjToFile(model01);	//	model01物件存入s2f物件指定的檔案中
 		
 		//	從檔案取出被序列化的物件內容，並還原成物件
@@ -30,19 +37,19 @@ public class HW21_main {
 		model03.setName("徐巃傣");
 		model03.setYear(39);
 		model03.setCity("埔里");
-		model03.setBirth(new Date(1981-1-5));
+		model03.setBirth(LocalDate.of(1981, 1, 5));
 		
 		HW21_Model model04 = new HW21_Model();
 		model04.setName("阿龍");
 		model04.setYear(41);
 		model04.setCity("台中市");
-		model04.setBirth(new Date(1979-1-5));
+		model04.setBirth(LocalDate.of(1979, 1, 5));
 		
 		HW21_Model model05 = new HW21_Model();
 		model05.setName("阿傣");
 		model05.setYear(42);
 		model05.setCity("台中市南屯區");
-		model05.setBirth(new Date(1978-2-7));
+		model05.setBirth(LocalDate.of(1978, 2, 7));
 		
 		/*	序列化物件儲存至DB
 		 * 	先建立List<HW21_Model>，把物件放入List<HW21_Model>

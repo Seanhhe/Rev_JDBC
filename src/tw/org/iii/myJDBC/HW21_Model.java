@@ -1,8 +1,7 @@
 package tw.org.iii.myJDBC;
 
 import java.io.Serializable;
-import java.sql.Date;
-import java.util.Calendar;
+import java.time.LocalDate;
 
 /*		java物件序列化，並儲存到檔案和資料庫
  * 		
@@ -17,7 +16,7 @@ public class HW21_Model implements Serializable {
 	private String name;	//	姓名
 	private int year;		//	年齡
 	private String city;	//	居住城市
-	private Date birth;		//	生日
+	private LocalDate birth;	// 生日
 	
 	public String getName() {
 		return name;
@@ -45,11 +44,11 @@ public class HW21_Model implements Serializable {
 		this.city = city;
 	}
 	
-	public Date getBirth() {
+	public LocalDate getBirth() {
 		return birth;
 	}
 	
-	public void setBirth(Date birth) {
+	public void setBirth(LocalDate birth) {
 		this.birth = birth;
 	}
 	
